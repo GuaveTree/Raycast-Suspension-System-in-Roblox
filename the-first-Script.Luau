@@ -1,30 +1,32 @@
+--!strict
 local RunService = game:GetService("RunService")
 local car = game.Workspace:FindFirstChild("car")
 
-local wheels = {
+local wheels:{[string]:Vector3} = {
 	FR = Vector3.new(3,0,4),
 	FL = Vector3.new(-3,0,4),
 	RR = Vector3.new(3,0,-4),
 	RL = Vector3.new(-3,0,-4)
 }
-local params = RaycastParams.new()
+local params:RaycastParams = RaycastParams.new()
 params.FilterDescendantsInstances = {car}
 
 -------------------------
-local wheelmax = 1.25
-local wheelredice = 0.3
-local lastwheellong = {}
-local debug = true
-local currentLength 
+local wheelmax:number = 1.25
+local wheelredice:number = 0.3
+local lastwheellong:{[string]:number} = {}
+local debugMode:boolean = true
+local currentLength:number 
 -------------------------
 for i, V in wheels do
 	lastwheellong[i] = 0.5
 end
 
-game:GetService("RunService").Heartbeat:Connect(function(deltatime)
+RunService.Heartbeat:Connect(function(deltatime:number)
 	
 	
 	for name, orginalpos in pairs(wheels) do
+		if not orginalpos then continue end
 		local rayorigen = car.CFrame:ToWorldSpace(CFrame.new(orginalpos)).Position
 		local dirction = -car.CFrame.UpVector * (wheelmax + wheelredice)
 		local raycast = workspace:Raycast(rayorigen, dirction, params)
@@ -33,7 +35,7 @@ game:GetService("RunService").Heartbeat:Connect(function(deltatime)
 			print("hit")
 		end
 		
-		if debug then
+		if debugMode then
 			
 			
 			if raycast then
