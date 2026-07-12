@@ -15,37 +15,41 @@ local wheelmax = 1.25
 local wheelredice = 0.3
 local lastwheellong = {}
 local debug = true
+local currentLength 
 -------------------------
 for i, V in wheels do
 	lastwheellong[i] = 0.5
 end
 
-while task.wait(0.3) do
-	local deltatime = RunService.Heartbeat:Wait()
+game:GetService("RunService").Heartbeat:Connect(function(deltatime)
+	
 	
 	for name, orginalpos in pairs(wheels) do
 		local rayorigen = car.CFrame:ToWorldSpace(CFrame.new(orginalpos)).Position
 		local dirction = -car.CFrame.UpVector * (wheelmax + wheelredice)
 		local raycast = workspace:Raycast(rayorigen, dirction, params)
-		
+		local direction = -car.CFrame.UpVector * (wheelmax + wheelredice)
 		if raycast then
 			print("hit")
 		end
 		
 		if debug then
-			local sizeY = wheelmax + wheelredice
+			
 			
 			if raycast then
-				sizeY = (raycast.Position - rayorigen).Magnitude
+				currentLength = raycast.Distance
+				
 			end
+			
 			
 			local part = Instance.new("Part")
 			part.CanQuery = false
 			part.CanTouch= false
+			part.CanCollide = false
 			part.Anchored = true
 			
-			part.Size = Vector3.new(0.1 , sizeY, 0.1)
-			part.Position = Vector3.new(rayorigen.X,rayorigen.Y*0.5,rayorigen.Z)
+			part.Size = Vector3.new(0.1, 0.1, currentLength)
+			part.CFrame = CFrame.lookAt(rayorigen, rayorigen + direction) * CFrame.new(0, 0, -currentLength/2)
 			part.Parent = workspace
 			
 			
@@ -54,8 +58,12 @@ while task.wait(0.3) do
 			else
 				part.Color = Color3.fromRGB(0, 170, 0)
 			end
-			game.Debris:AddItem(part, 0.3)
+			game.Debris:AddItem(part, deltatime)
 			
 		end
 	end	
-end
+end)
+
+
+
+	
