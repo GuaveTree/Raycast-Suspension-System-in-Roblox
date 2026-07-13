@@ -23,20 +23,29 @@ params.FilterDescendantsInstances = {car}
 ----------------------------------
 local DebugMode = true
 ----------------------------------
-function VisbalDebug (Raycast: RaycastResult)
+function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection)
     local folder = game.ReplicatedStorage:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
     folder.Parent = game:GetService("ReplicatedStorage")
     folder.Name = "VisbalDebugPart"
 
     local Part  =  if not folder:FindFirstChild("Part") then Instance.new("Part") else folder:FindFirstChild("Part")
-    Part.Parent = folder
+    Part.Parent = workspace
+    Part.Anchored = true
+    Part.CanCollide = false
+    Part.CanTouch = false
+    local currentLength = if Raycast then Raycast.Distance else RayDirection.Magnitude
+    Part.Size = Vector3.new(0.2, 0.2, currentLength)
+    Part.CFrame = CFrame.lookAt(RayOrigin, RayOrigin + RayDirection) * CFrame.new(0, 0, -currentLength / 2)
+
     if Raycast then
         Part.Color = Color3.fromRGB(0, 75, 180)
         else
         Part.Color = Color3.fromRGB(180, 75, 0)
     end
 
-
+    task.delay(0.01, function()
+        Part.Parent = folder
+    end)
 end
 
 
