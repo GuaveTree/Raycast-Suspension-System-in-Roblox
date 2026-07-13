@@ -9,14 +9,14 @@ local Wheels = {
     BL = Vector3.new(-3,0,-4)
 }
 
-local folder = game.ReplicatedStorage:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
+local folder = Workspace:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
 folder.Parent = Workspace
 folder.Name = "VisbalDebugPart"
-local WheelSuspensionLengtMemory = {}
-local WheelRayCasts = {}
+local WheelSuspensionLengthMemory = {}
+
 
 for name, OriginalPosition in pairs(Wheels) do
-    WheelSuspensionLengtMemory[name] = 0.5
+    WheelSuspensionLengthMemory[name] = 0.5
 end
 ----------------------------------
 local SuspensionMaxLength = 1.3
@@ -30,7 +30,7 @@ local DebugMode = true
 local springforce = 1500
 local damping = 120
 ----------------------------------
-function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection, WheelName)
+function VisualDebug (Raycast: RaycastResult?,RayOrigin, RayDirection, WheelName)
 
     local Part  =  if not folder:FindFirstChild(WheelName) then Instance.new("Part") else folder:FindFirstChild(WheelName)
     Part.Name = WheelName
@@ -41,7 +41,7 @@ function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection, WheelName)
     Part.CanQuery = false
     Part.Material = Enum.Material.Neon
     local currentLength = if Raycast then Raycast.Distance else RayDirection.Magnitude
-    math.clamp(currentLength, 0, SuspensionMaxLength)
+    currentLength = math.clamp(currentLength, 0, SuspensionMaxLength)
     Part.Size = Vector3.new(0.2, 0.2, currentLength)
     Part.CFrame = CFrame.lookAt(RayOrigin, RayOrigin + RayDirection) * CFrame.new(0, 0, -currentLength / 2)
 
@@ -55,15 +55,15 @@ end
 
 local function GetAllForce(currentLength, WheelName, delatime)
     local spring = (SuspensionMaxLength - currentLength) * springforce
-    local damp = ((WheelSuspensionLengtMemory[WheelName] - currentLength)/ delatime) * damping
+    local damp = ((WheelSuspensionLengthMemory[WheelName] - currentLength)/ delatime) * damping
     local totalForce = spring + damp
-    WheelSuspensionLengtMemory[WheelName] = currentLength
+    WheelSuspensionLengthMemory[WheelName] = currentLength
     return totalForce
 end
 
 
 local function ForceApply(totalForce, deltatime , RayOrigin)
-    if totalForce > 0 then
+    if totalForce ~= 0 then
         local forceVector = carCFrame.UpVector * totalForce
         car:ApplyImpulseAtPosition(forceVector * deltatime, RayOrigin)
     end
@@ -79,11 +79,11 @@ local function GetSuspensionLengt(delatime)
         local RayDirection = -carCFrame.UpVector * (SuspensionMaxLength + WheelRadius)
         local RayCast = Workspace:Raycast(RayOrigin, RayDirection, params)
         if DebugMode then
-            VisbalDebug(RayCast, RayOrigin, RayDirection, WheelName)
+            VisualDebug(RayCast, RayOrigin, RayDirection, WheelName)
         end
 
             local currentLength = if RayCast then RayCast.Distance - WheelRadius else SuspensionMaxLength
-            math.clamp(currentLength, 0, SuspensionMaxLength)
+            currentLength = math.clamp(currentLength, 0, SuspensionMaxLength)
             local totalForce = GetAllForce(currentLength, WheelName, delatime)
             ForceApply(totalForce, delatime, RayOrigin)
     end
