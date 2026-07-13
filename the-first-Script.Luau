@@ -61,14 +61,12 @@ local function GetAllForce(currentLength, WheelName, delatime)
     return totalForce
 end
 
-
 local function ForceApply(totalForce, deltatime , RayOrigin)
     if totalForce ~= 0 then
         local forceVector = carCFrame.UpVector * totalForce
         car:ApplyImpulseAtPosition(forceVector * deltatime, RayOrigin)
     end
 end
-
 
 local function GetSuspensionLengt(delatime)
     carCFrame = car.CFrame
