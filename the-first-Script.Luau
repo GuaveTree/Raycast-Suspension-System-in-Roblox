@@ -1,4 +1,5 @@
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local car: Instance = game.Workspace:WaitForChild("Car")
 
 local Wheels = {
@@ -8,8 +9,10 @@ local Wheels = {
     BL = Vector3.new(-3,0,-4)
 }
 
-
+local folder = game.ReplicatedStorage:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
 local WheelSuspensionLengtMemory = {}
+local WheelRayCasts = {}
+
 for name, OriginalPosition in pairs(Wheels) do
     WheelSuspensionLengtMemory[name] = 0.5
 end
@@ -19,17 +22,19 @@ local WheelRadius = 0.5
 ----------------------------------
 local carCFrame:CFrame = car.CFrame
 local params = RaycastParams.new()
-params.FilterDescendantsInstances = {car}
+params.FilterDescendantsInstances = {car, folder}
 ----------------------------------
 local DebugMode = true
+
 ----------------------------------
-function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection)
-    local folder = game.ReplicatedStorage:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
+function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection, WheelName)
+
     folder.Parent = game:GetService("ReplicatedStorage")
     folder.Name = "VisbalDebugPart"
 
-    local Part  =  if not folder:FindFirstChild("Part") then Instance.new("Part") else folder:FindFirstChild("Part")
-    Part.Parent = workspace
+    local Part  =  if not folder:FindFirstChild(WheelName) then Instance.new("Part") else folder:FindFirstChild(WheelName)
+    Part.Name = WheelName
+    Part.Parent = Workspace
     Part.Anchored = true
     Part.CanCollide = false
     Part.CanTouch = false
@@ -49,19 +54,24 @@ function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection)
 end
 
 
-
-
 local function GetSuspensionLengt()
     carCFrame = car.CFrame
-    local WheelRayCasts = {}
+    
     for WheelName, OriginalPosition in pairs(Wheels) do
 
         local RayOrigin =  carCFrame:ToWorldSpace(CFrame.new(OriginalPosition)).Position
         local RayDirection = -carCFrame.UpVector * (SuspensionMaxLengt + WheelRadius)
         local RayCast = Workspace:Raycast(RayOrigin, RayDirection, params)
+        if DebugMode then
+            VisbalDebug(RayCast, RayOrigin, RayDirection, WheelName)
+        end
         WheelRayCasts[WheelName] = RayCast
     end
-
     return WheelRayCasts
 end
+
+
+
+
+
 
