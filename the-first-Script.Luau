@@ -25,8 +25,8 @@ local params = RaycastParams.new()
 params.FilterDescendantsInstances = {car, folder}
 ----------------------------------
 local DebugMode = true
-local springforce = 100
-local damping = 50
+local springforce = 1500
+local damping = 120
 ----------------------------------
 function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection, WheelName)
 
@@ -55,22 +55,6 @@ function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection, WheelName)
 end
 
 
-local function GetSuspensionLengt()
-    carCFrame = car.CFrame
-    
-    for WheelName, OriginalPosition in pairs(Wheels) do
-
-        local RayOrigin =  carCFrame:ToWorldSpace(CFrame.new(OriginalPosition)).Position
-        local RayDirection = -carCFrame.UpVector * (SuspensionMaxLengt + WheelRadius)
-        local RayCast = Workspace:Raycast(RayOrigin, RayDirection, params)
-        if DebugMode then
-            VisbalDebug(RayCast, RayOrigin, RayDirection, WheelName)
-        end
-        WheelRayCasts[WheelName] = RayCast
-    end
-    return WheelRayCasts
-end
-
 local function GetAllForce(currentLength, WheelName, delattime)
     local spring = (SuspensionMaxLengt - currentLength) * springforce
     local damp = ((WheelSuspensionLengtMemory[WheelName] - currentLength)/ delattime) * damping
@@ -80,5 +64,36 @@ local function GetAllForce(currentLength, WheelName, delattime)
 end
 
 
+local function ForceApplay(totalForce, deltatime , RayOrigin)
+    if totalForce > 0 then
+        local forceVector = carCFrame.UpVector * totalForce
+        car:ApplyImpulseAtPosition(forceVector * deltatime, RayOrigin)
+    end
+end
 
+
+local function GetSuspensionLengt(delattime)
+
+
+    for WheelName, OriginalPosition in pairs(Wheels) do
+        carCFrame = car.CFrame
+        local RayOrigin =  carCFrame:ToWorldSpace(CFrame.new(OriginalPosition)).Position
+        local RayDirection = -carCFrame.UpVector * (SuspensionMaxLengt + WheelRadius)
+        local RayCast = Workspace:Raycast(RayOrigin, RayDirection, params)
+        if DebugMode then
+            VisbalDebug(RayCast, RayOrigin, RayDirection, WheelName)
+        end
+
+            local currentLength = if RayCast then Ray.Distance - WheelRadius else SuspensionMaxLengt
+            local totalForce = GetAllForce(currentLength, WheelName, delattime)
+            ForceApplay(totalForce, delattime, RayOrigin)
+    end
+end
+
+
+
+
+RunService.Heartbeat:Connect(function(deltaTime)
+    
+end)
 
