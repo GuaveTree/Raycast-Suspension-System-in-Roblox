@@ -25,7 +25,8 @@ local params = RaycastParams.new()
 params.FilterDescendantsInstances = {car, folder}
 ----------------------------------
 local DebugMode = true
-
+local springforce = 100
+local damping = 50
 ----------------------------------
 function VisbalDebug (Raycast: RaycastResult,RayOrigin, RayDirection, WheelName)
 
@@ -70,7 +71,13 @@ local function GetSuspensionLengt()
     return WheelRayCasts
 end
 
-
+local function GetAllForce(currentLength, WheelName, delattime)
+    local spring = (SuspensionMaxLengt - currentLength) * springforce
+    local damp = ((WheelSuspensionLengtMemory[WheelName] - currentLength)/ delattime) * damping
+    local totalForce = spring + damp
+    WheelSuspensionLengtMemory[WheelName] = currentLength
+    return totalForce
+end
 
 
 
