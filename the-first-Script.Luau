@@ -94,6 +94,6 @@ end
 
 
 RunService.Heartbeat:Connect(function(deltaTime)
-    
+    GetSuspensionLengt(deltaTime)
 end)
 
