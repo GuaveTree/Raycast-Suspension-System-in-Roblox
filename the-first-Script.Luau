@@ -27,8 +27,11 @@ local params = RaycastParams.new()
 params.FilterDescendantsInstances = {car, folder}
 ----------------------------------
 local DebugMode = true
-local springforce = 100
-local damping = 5
+local gravity = Workspace.Gravity
+local carmass = car.AssemblyMass
+----------------------------------
+local springforce = (carmass * gravity / 4) * 2.5
+local damping = springforce /4
 ----------------------------------
 car:SetNetworkOwner(nil)
 function VisualDebug (Raycast: RaycastResult?,RayOrigin, RayDirection, WheelName)
@@ -62,9 +65,12 @@ local function GetAllForce(currentLength, WheelName, delatime)
     return totalForce
 end
 
-local function ForceApply(totalForce, deltatime , RayOrigin)
+local function ForceApply(totalForce, deltatime , RayOrigin, frictionForce)
     if totalForce ~= 0 then
         local forceVector = carCFrame.UpVector * totalForce
+        if frictionForce then
+            forceVector = frictionForce + forceVector
+        end
         car:ApplyImpulseAtPosition(forceVector * deltatime, RayOrigin)
     end
 end
@@ -73,7 +79,7 @@ local function GetSuspensionLengt(delatime)
     carCFrame = car.CFrame
 
     for WheelName, OriginalPosition in pairs(Wheels) do
-       
+
         local RayOrigin =  carCFrame:ToWorldSpace(CFrame.new(OriginalPosition)).Position
         local RayDirection = -carCFrame.UpVector * (SuspensionMaxLength + WheelRadius)
         local RayCast = Workspace:Raycast(RayOrigin, RayDirection, params)
@@ -81,14 +87,24 @@ local function GetSuspensionLengt(delatime)
             VisualDebug(RayCast, RayOrigin, RayDirection, WheelName)
         end
 
-            local currentLength = if RayCast then RayCast.Distance - WheelRadius else SuspensionMaxLength
-            currentLength = math.clamp(currentLength, 0, SuspensionMaxLength)
-            local totalForce = GetAllForce(currentLength, WheelName, delatime)
-            ForceApply(totalForce, delatime, RayOrigin)
+        if RayCast then
+             local currentLength = RayCast.Distance - WheelRadius
+                currentLength = math.clamp(currentLength, 0, SuspensionMaxLength)
+                local totalForce = GetAllForce(currentLength, WheelName, delatime)
+                local WheelVelocity = car:GetVelocityAtPosition(RayOrigin)
+                local rigthtCar = carCFrame.RightVector
+                local sid = WheelVelocity:Dot(rigthtCar)
+                local Havy = carmass * 15
+                local frictionForce = rigthtCar * (-sid * Havy)
+                ForceApply(totalForce, delatime, RayOrigin, frictionForce)
+
+           else
+            WheelSuspensionLengthMemory[WheelName] = SuspensionMaxLength
+        end
     end
+    local sahpforce = 10
+    car:ApplyImpulse(-carCFrame.UpVector * (carmass * sahpforce * delatime))
 end
-
-
 
 
 RunService.Heartbeat:Connect(function(deltaTime)
