@@ -27,9 +27,10 @@ local params = RaycastParams.new()
 params.FilterDescendantsInstances = {car, folder}
 ----------------------------------
 local DebugMode = true
-local springforce = 1500
-local damping = 120
+local springforce = 100
+local damping = 5
 ----------------------------------
+car:SetNetworkOwner(nil)
 function VisualDebug (Raycast: RaycastResult?,RayOrigin, RayDirection, WheelName)
 
     local Part  =  if not folder:FindFirstChild(WheelName) then Instance.new("Part") else folder:FindFirstChild(WheelName)
