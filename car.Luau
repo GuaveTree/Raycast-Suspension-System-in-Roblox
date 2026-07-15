@@ -75,7 +75,7 @@ local function simulateSuspensionResponse(deltaTime: number, Wheels: {[string]: 
 	-----------------------------------------------------
 	local CarCFrame: CFrame = Car.CFrame
 	local CarMass: number = Car.AssemblyMass
-	local gravity: number = workS.Gravity
+	local gravity: number = workspace.Gravity
 	local springStiffness: number = (CarMass * gravity) /4
 	local dampingStiffness: number =  springStiffness /2
 
