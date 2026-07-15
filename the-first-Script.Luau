@@ -12,12 +12,9 @@ local Wheels = {
 local folder = Workspace:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
 folder.Parent = Workspace
 folder.Name = "VisbalDebugPart"
-local WheelSuspensionLengthMemory = {}
+
 --تعليق 
 
-for name, OriginalPosition in pairs(Wheels) do
-    WheelSuspensionLengthMemory[name] = 0.5
-end
 ----------------------------------
 local SuspensionMaxLength = 1.3
 local WheelRadius = 0.5
