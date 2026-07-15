@@ -2,10 +2,10 @@
 local CarsModule = {}
 local RunService = game:GetService("RunService")
 local CollectionService = game:GetService("CollectionService") -- Coming soon
-local workS = game:GetService("Workspace")
+local workspace = game:GetService("Workspace")
 local NormalCar = {
 	MaxSpeed = 200,
-	WheelRadius = 1.3,
+	WheelRadius = 3,
 	SuspensionMaxLength = 1,
 	Wheels = {              --Noraml Car Wheels Positions
 		FR = Vector3.new(3,0,4),
@@ -13,14 +13,14 @@ local NormalCar = {
 		BR = Vector3.new(3,0,-4),
 		BL = Vector3.new(-3,0,-4)
 	},
-	CarBody = workS:FindFirstChild("Car")
+	CarBody = workspace:FindFirstChild("Car")
 }
 --------------------------------------------------
 CarsModule.__index = CarsModule
 setmetatable(CarsModule, {__index = NormalCar})
 --------------------------------------------------
-local folder = workS:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
-folder.Parent = workS
+local folder = workspace:FindFirstChild("VisbalDebugPart") or Instance.new("Folder")
+folder.Parent = workspace
 folder.Name = "VisbalDebugPart"
 --------------------------------------------------
 export type mytype = {
@@ -76,10 +76,9 @@ local function simulateSuspensionResponse(deltaTime: number, Wheels: {[string]: 
 	local CarCFrame: CFrame = Car.CFrame
 	local CarMass: number = Car.AssemblyMass
 	local gravity: number = workS.Gravity
-	local MaxFriction: number
 	local springStiffness: number = (CarMass * gravity) /4
 	local dampingStiffness: number =  springStiffness /2
-	
+
 	-----------------------------------------------------
 
 	--Main Loop! 🤗
@@ -89,39 +88,48 @@ local function simulateSuspensionResponse(deltaTime: number, Wheels: {[string]: 
 		--RayCast Part😉
 		local OriginPosition: Vector3 = CarCFrame:ToWorldSpace(CFrame.new(WheelOriginalPosition)).Position
 		local RayDirection: Vector3 = -CarCFrame.UpVector * (SuspensionMaxLength + WheelRadius)
+		-------------------------------------------------------------
 		local raycastParams = RaycastParams.new()
 		raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 		raycastParams.FilterDescendantsInstances = {Car, folder}
-		local RayCast: RaycastResult? = workS:Raycast(OriginPosition, RayDirection, raycastParams)
+		------------------------------------------------------------
+		local RayCast: RaycastResult? = workspace:Raycast(OriginPosition, RayDirection, raycastParams)
 		VisualDebug(RayCast, OriginPosition, RayDirection, WheelName, info)
-		---------------------------------------
+		------------------------------------------------------------
 		if RayCast then
 			--Physics Part 😎
+			---------------------------------------------------------
+
 			local CarVelocity = Car:GetVelocityAtPosition(OriginPosition)
 			local UPVelocity: number = CarVelocity:Dot(CarCFrame.UpVector)
 			local MaxHookForce = springStiffness * SuspensionMaxLength * 3
-			local dampingForce: number = (-UPVelocity * dampingStiffness)
-			dampingForce = math.clamp(dampingForce, 0, MaxHookForce)
+			local dampingForce: number = math.clamp((-UPVelocity * dampingStiffness), 0, MaxHookForce)
+
 			---------------------------------------------------------
-			local CurrentLength: number = (RayCast.Distance - WheelRadius)
-			CurrentLength = math.clamp(CurrentLength,0 ,SuspensionMaxLength)
+
+			local CurrentLength: number = math.clamp((RayCast.Distance - WheelRadius),0 ,SuspensionMaxLength)
 			local SuspensionCompression: number = math.clamp(SuspensionMaxLength - CurrentLength , 0, SuspensionMaxLength)
 			local springForce: number = (springStiffness * SuspensionCompression)
+
 			---------------------------------------------------------
-			local HookForce: number = (springForce + dampingForce)
-			HookForce = math.clamp(HookForce, 0, MaxHookForce)
+
+			local HookForce: number = math.clamp((springForce + dampingForce), 0, MaxHookForce)
 			local MaxFriction = HookForce * 0.5
+
 			---------------------------------------------------------
+
 			local SideVelocity: number = CarVelocity:Dot(CarCFrame.RightVector)
 			local TireGrip = CarMass * 5
-			--local NormalVelocity: number = (CarMass /4) * 2
 			local NormalLateralFriction: number = -(SideVelocity * TireGrip)
 			NormalLateralFriction = math.clamp(NormalLateralFriction, -MaxFriction, MaxFriction)
+
 			---------------------------------------------------------
+
 			local NetForce: Vector3 = (CarCFrame.UpVector * HookForce) + (CarCFrame.RightVector * NormalLateralFriction)
 			local AppliedImpulse: Vector3 = (NetForce * deltaTime)
 			Car:ApplyImpulseAtPosition(AppliedImpulse, OriginPosition)
 
+			---------------------------------------------------------
 		end
 	end
 end
