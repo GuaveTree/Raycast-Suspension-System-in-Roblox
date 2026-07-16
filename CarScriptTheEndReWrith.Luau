@@ -96,12 +96,17 @@ function simulateSuspensionResponse(info, daltatime)
         local Raycast: RaycastResult = workspace:Raycast(OriginPosition, RayDirection, RayPramas)
 
         if Raycast then
-           local CarVelocity = Car:GetVelocityAtPosition(OriginPosition)
-           local CurrentLength = math.clamp((Raycast.Distance - WheelRadius) - SuspensionMaxLength,0 , SuspensionMaxLength)
-           local SpringForce = math.clamp(CurrentLength * springStiffness, 0, MaxHookForce)
-           local dampingForce = math.clamp(CarVelocity:Dot(Raycast.Normal) * dampingStiffness, -MaxHookForce, MaxHookForce)
-           local HookForce = math.clamp((SpringForce + dampingForce), 0, MaxHookForce)
-
+            local CarVelocity: Vector3 = Car:GetVelocityAtPosition(OriginPosition)
+            local CurrentLength: number = math.clamp((Raycast.Distance - WheelRadius) - SuspensionMaxLength,0 , SuspensionMaxLength)
+            local SpringForce: number = math.clamp(CurrentLength * springStiffness, 0, MaxHookForce)
+            local dampingForce: number = math.clamp(CarVelocity:Dot(Raycast.Normal) * dampingStiffness, -MaxHookForce, MaxHookForce)
+            local HookForce: number = math.clamp((SpringForce + dampingForce), 0, MaxHookForce)
+			local MaxForce: number = HookForce * 0.5
+			local NormalLateralFriction: number = math.clamp(-(CarVelocity:Dot(Car.CFrame.RightVector)* CarMass*5), -MaxForce, MaxForce)
+			local netForce: Vector3 = (Car.CFrame.UpVector * HookForce) + (Car.CFrame.RightVector * NormalLateralFriction)
+			local daltatime: number = math.min(daltatime, 1/30)
+			local AppliedImpulse: Vector3 = (netForce * daltatime)
+			Car:ApplyImpulseAtPosition(OriginPosition, AppliedImpulse)
         end
     end
 end
