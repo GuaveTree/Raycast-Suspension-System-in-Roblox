@@ -5,8 +5,8 @@ local CollectionService = game:GetService("CollectionService") -- Coming soon
 local workspace = game:GetService("Workspace")
 local NormalCar = {
 	MaxSpeed = 200,
-	WheelRadius = 3,
-	SuspensionMaxLength = 1,
+	WheelRadius = 0.5,
+	SuspensionMaxLength = 3,
 	Wheels = {              --Noraml Car Wheels Positions
 		FR = Vector3.new(3,0,4),
 		FL = Vector3.new(-3,0,4),
@@ -77,8 +77,9 @@ local function simulateSuspensionResponse(deltaTime: number, Wheels: {[string]: 
 	local CarMass: number = Car.AssemblyMass
 	local gravity: number = workspace.Gravity
 	local springStiffness: number = (CarMass * gravity) /4
-	local dampingStiffness: number =  springStiffness /2
-
+	local zeta = 0.7
+	local dampingStiffness: number =  (zeta *2) * math.sqrt(springStiffness * (CarMass /4))
+	deltaTime = math.min(deltaTime, 1 /30)
 	-----------------------------------------------------
 
 	--Main Loop! 🤗
@@ -101,9 +102,9 @@ local function simulateSuspensionResponse(deltaTime: number, Wheels: {[string]: 
 			---------------------------------------------------------
 
 			local CarVelocity = Car:GetVelocityAtPosition(OriginPosition)
-			local UPVelocity: number = CarVelocity:Dot(CarCFrame.UpVector)
+			local UPVelocity: number = CarVelocity:Dot(RayCast.Normal)
 			local MaxHookForce = springStiffness * SuspensionMaxLength * 3
-			local dampingForce: number = math.clamp((-UPVelocity * dampingStiffness), 0, MaxHookForce)
+			local dampingForce: number = math.clamp((-UPVelocity * dampingStiffness), -MaxHookForce, MaxHookForce)
 
 			---------------------------------------------------------
 
@@ -126,6 +127,7 @@ local function simulateSuspensionResponse(deltaTime: number, Wheels: {[string]: 
 			---------------------------------------------------------
 
 			local NetForce: Vector3 = (CarCFrame.UpVector * HookForce) + (CarCFrame.RightVector * NormalLateralFriction)
+			
 			local AppliedImpulse: Vector3 = (NetForce * deltaTime)
 			Car:ApplyImpulseAtPosition(AppliedImpulse, OriginPosition)
 
